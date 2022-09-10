@@ -1,14 +1,18 @@
 #include "Application.h"
-#include <GLFW/glfw3.h>
-#include <iostream>
+#include <Windows.h>
+#include "Graphics.h"
+#include "Input.h"
 
 Application::Application(int width, int height, const std::string_view& title)
 {
-	mTitle = "ApplicationTitle";
 	mWindowWidth = width;
 	mWindowHeight = height;
+	mWindowTitle.assign(title.begin(), title.end());
+	mHinstance = nullptr;
+	mHandle = nullptr;
 
-	mWindow = nullptr;
+	mGraphics = nullptr;
+	mInput = nullptr;
 }
 Application::~Application()
 {
@@ -18,75 +22,147 @@ void Application::Run()
 {
 	if (!Initialize())
 	{
-		std::cout << "Error::Application::FailedToInit\n";
+		OutputDebugStringW(L"Error::Application::Init");
 		return;
 	}
+	MSG msg;
 
-	if (!Load())
-	{
-		std::cout << "Error::Application::FailedToLoad\n";
-		return;
-	}
+	ZeroMemory(&msg, sizeof(MSG));
 
-	while (!glfwWindowShouldClose(mWindow))
+	while (true)
 	{
-		glfwPollEvents();
-		Update();
-		Render();
+		if (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
+		{
+			if (msg.message == WM_QUIT)
+			{
+				break;
+			}
+			else
+			{
+				if (!Frame())
+				{
+					break;
+				}
+			}
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
 	}
+	Cleanup();
 }
-void Application::Cleanup()
+long long __stdcall Application::MessageHandler(HWND__* hwnd, unsigned int msg, unsigned long long wParam, long long lParam)
 {
-	if (mWindow != nullptr)
-	{
-		glfwDestroyWindow(mWindow);
-		mWindow = nullptr;
-	}
-	glfwTerminate();
+	
+	Application* thisPtr = reinterpret_cast<Application*>(GetWindowLongPtrW(hwnd, GWLP_USERDATA));
+	if (thisPtr)
+		return thisPtr->WndProc(hwnd, msg, wParam, lParam);
+
+	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 bool Application::Initialize()
 {
-	if (!glfwInit())
+	WNDCLASSEX wc{};
+	int posX, posY;
+
+	mHinstance = GetModuleHandle(NULL);
+
+	wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+	wc.lpfnWndProc = MessageHandler;
+	wc.cbClsExtra = 0;
+	wc.cbWndExtra = 0;
+	wc.hInstance = mHinstance;
+	wc.hIcon = LoadIcon(NULL, IDI_WINLOGO);
+	wc.hIconSm = wc.hIcon;
+	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+	wc.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
+	wc.lpszMenuName = NULL;
+	wc.lpszClassName = mWindowTitle.c_str();
+	wc.cbSize = sizeof(WNDCLASSEX);
+
+	RegisterClassEx(&wc);
+
+	posX = (GetSystemMetrics(SM_CXSCREEN) - mWindowWidth) / 2;
+	posY = (GetSystemMetrics(SM_CYSCREEN) - mWindowHeight) / 2;
+
+	mHandle = CreateWindowW(mWindowTitle.c_str(), mWindowTitle.c_str(),
+		WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+		posX, posY, mWindowWidth, mWindowHeight, NULL, NULL, mHinstance, NULL);
+
+	ShowWindow(mHandle, SW_SHOW);
+	SetFocus(mHandle);
+	UpdateWindow(mHandle);
+
+	SetWindowLongPtrW(mHandle, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+
+	mGraphics = new Graphics(mWindowWidth, mWindowHeight, mHandle);
+	if (mGraphics == nullptr)
 	{
-		std::cout << "Error::Application::FailedToInitGLFW\n";
+		OutputDebugStringW(L"Error::Application::Init::Graphics");
 		return false;
 	}
-	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-
-	mWindow = glfwCreateWindow(mWindowWidth, mWindowHeight, mTitle.c_str(), nullptr, nullptr);
-	if (mWindow == nullptr)
+	mInput = new Input;
+	if (mInput == nullptr)
 	{
-		std::cout << "Error::Application::FailedToCreateWindow\n";
-		glfwTerminate();
+		OutputDebugStringW(L"Error::Application::Init::Input");
 		return false;
 	}
-
-	glfwSetWindowUserPointer(mWindow, this);
-	glfwSetFramebufferSizeCallback(mWindow, HandleResize);
 
 	return true;
 }
-GLFWwindow* Application::GetWindow() const
+bool Application::Frame()
 {
-	return mWindow;
+	if (mInput->IsKeyDown(VK_ESCAPE))
+		return false;
+	if (!mGraphics->Frame())
+		return false;
+
+	return true;
+}
+void Application::Cleanup()
+{
+	if (mGraphics != nullptr)
+	{
+		mGraphics->Cleanup();
+		delete mGraphics;
+		mGraphics = nullptr;
+	}
+	if (mInput != nullptr)
+	{
+		delete mInput;
+		mInput = nullptr;
+	}
+
+	DestroyWindow(mHandle);
+	mHandle = nullptr;
+
+	UnregisterClassW(mWindowTitle.c_str(), mHinstance);
+	mHinstance = nullptr;
 }
 
-int Application::GetWindowWidth() const
+long long __stdcall Application::WndProc(HWND__* hwnd, unsigned int msg, unsigned long long wParam, long long lParam)
 {
-	return mWindowWidth;
-}
-
-int Application::GetWindowHeight() const
-{
-	return mWindowHeight;
-}
-void Application::HandleResize(GLFWwindow* window, int width, int height)
-{
-	Application& application = *static_cast<Application*>(glfwGetWindowUserPointer(window));
-	application.OnResize(width, height);
-}
-void Application::OnResize(int width, int height)
-{
-	mWindowWidth = width;
-	mWindowHeight = height;
+	switch (msg)
+	{
+	case WM_DESTROY:
+	{
+		PostQuitMessage(0);
+		break;
+	}
+	case WM_CLOSE:
+	{
+		PostQuitMessage(0);
+		break;
+	}
+	case WM_KEYDOWN:
+	{
+		mInput->SetKeyDown(static_cast<unsigned int>(wParam));
+		break;
+	}
+	case WM_KEYUP:
+	{
+		mInput->SetKeyUp(static_cast<unsigned int>(wParam));
+		break;
+	}
+	}
+	return DefWindowProc(hwnd, msg, wParam, lParam);
 }

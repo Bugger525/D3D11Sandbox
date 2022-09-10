@@ -1,7 +1,10 @@
-#include "CoolApp.h"
+#include <Windows.h>
+#include "Engine/Application.h"
 
-int main(int argc, char* argv[])
+int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pScmdline, int iCmdshow)
 {
-    auto app = CoolApp(800, 600);
-    app.Run();
+	auto app = Application(800, 600, "D3D11Sandbox");
+	app.Run();	
+
+	return 0;
 }

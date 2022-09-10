@@ -2,34 +2,33 @@
 
 #include <string>
 
-struct GLFWwindow;
+class Graphics;
+class Input;
+struct HINSTANCE__;
+struct HWND__;
 
 class Application
 {
 public:
-	Application(int width, int height, const std::string_view& title = "");
-	virtual ~Application();
+	Application(int width, int height, const std::string_view& title);
+	~Application();
 
 	void Run();
 
-protected:
-	virtual void Cleanup();
-	virtual bool Initialize();
-	virtual bool Load() = 0;
-	virtual void Render() = 0;
-	virtual void Update() = 0;
-
-	[[nodiscard]] GLFWwindow* GetWindow() const;
-	[[nodiscard]] int GetWindowWidth() const;
-	[[nodiscard]] int GetWindowHeight() const;
-
-	static void HandleResize(GLFWwindow* window, int width, int height);
-	virtual void OnResize(int width, int height);
-
+	static long long __stdcall MessageHandler(HWND__*, unsigned int, unsigned long long, long long);
 private:
-	std::string mTitle;
+	bool Initialize();
+	bool Frame();
+	void Cleanup();
+
+	long long __stdcall WndProc(HWND__*, unsigned int, unsigned long long, long long);
+
 	int mWindowWidth;
 	int mWindowHeight;
+	std::wstring mWindowTitle;
+	HINSTANCE__* mHinstance;
+	HWND__* mHandle;
 
-	GLFWwindow* mWindow;
+	Graphics* mGraphics;
+	Input* mInput;
 };
