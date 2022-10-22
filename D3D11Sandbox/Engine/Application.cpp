@@ -8,11 +8,6 @@ Application::Application(int width, int height, const std::string_view& title)
 	mWindowWidth = width;
 	mWindowHeight = height;
 	mWindowTitle.assign(title.begin(), title.end());
-	mHinstance = nullptr;
-	mHandle = nullptr;
-
-	mGraphics = nullptr;
-	mInput = nullptr;
 }
 Application::~Application()
 {
@@ -22,7 +17,7 @@ void Application::Run()
 {
 	if (!Initialize())
 	{
-		OutputDebugStringW(L"Error::Application::Init");
+		OutputDebugStringW(L"Error::Application::Init\n");
 		return;
 	}
 	MSG msg;
@@ -52,7 +47,7 @@ void Application::Run()
 }
 long long __stdcall Application::MessageHandler(HWND__* hwnd, unsigned int msg, unsigned long long wParam, long long lParam)
 {
-	
+
 	Application* thisPtr = reinterpret_cast<Application*>(GetWindowLongPtrW(hwnd, GWLP_USERDATA));
 	if (thisPtr)
 		return thisPtr->WndProc(hwnd, msg, wParam, lParam);
@@ -97,13 +92,13 @@ bool Application::Initialize()
 	mGraphics = new Graphics(mWindowWidth, mWindowHeight, mHandle);
 	if (mGraphics == nullptr)
 	{
-		OutputDebugStringW(L"Error::Application::Init::Graphics");
+		OutputDebugStringW(L"Error::Application::Init::Graphics\n");
 		return false;
 	}
 	mInput = new Input;
 	if (mInput == nullptr)
 	{
-		OutputDebugStringW(L"Error::Application::Init::Input");
+		OutputDebugStringW(L"Error::Application::Init::Input\n");
 		return false;
 	}
 

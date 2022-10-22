@@ -23,12 +23,12 @@ private:
 
 	long long __stdcall WndProc(HWND__*, unsigned int, unsigned long long, long long);
 
-	int mWindowWidth;
-	int mWindowHeight;
-	std::wstring mWindowTitle;
-	HINSTANCE__* mHinstance;
-	HWND__* mHandle;
+	int mWindowWidth = 800;
+	int mWindowHeight = 600;
+	std::wstring mWindowTitle = L"D3D11Sandbox";
+	HINSTANCE__* mHinstance = nullptr;
+	HWND__* mHandle = nullptr;
 
-	Graphics* mGraphics;
-	Input* mInput;
+	Graphics* mGraphics = nullptr;
+	Input* mInput = nullptr;
 };
