@@ -5,12 +5,6 @@
 
 class Model
 {
-private:
-    struct VertexType
-    {
-        XMFLOAT3 Position;
-        XMFLOAT4 Color;
-    };
 public:
     Model(ID3D11Device* device);
     ~Model();
