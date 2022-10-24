@@ -20,7 +20,7 @@ public:
 
 	int GetIndexCount() const;
 private:
-    ID3D11Buffer* mVertexBuffer;
-    ID3D11Buffer* mIndexBuffer;
-	int mVertexCount, mIndexCount;
+    ID3D11Buffer* mVertexBuffer = nullptr;
+    ID3D11Buffer* mIndexBuffer = nullptr;
+    int mVertexCount= 0, mIndexCount = 0;
 };
