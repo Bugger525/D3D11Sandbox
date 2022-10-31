@@ -8,15 +8,16 @@
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3d11.lib")
 
+namespace WRL = Microsoft::WRL;
 namespace DX = DirectX;
 
 IndirectX::IndirectX(int windowWidth, int windowHeight, HWND__* handle, bool vsync, bool fullScreen, float screenDepth, float screenNear)
 {
-	HRESULT result;
+	HRESULT result = S_OK;
 
 	mVsyncEnabled = vsync;
 
-	IDXGIFactory* factory = nullptr;
+	WRL::ComPtr<IDXGIFactory> factory = nullptr;
 	result = CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&factory);
 	if (FAILED(result))
 	{
@@ -24,7 +25,7 @@ IndirectX::IndirectX(int windowWidth, int windowHeight, HWND__* handle, bool vsy
 		return;
 	}
 
-	IDXGIAdapter* adapter = nullptr;
+	WRL::ComPtr<IDXGIAdapter> adapter = nullptr;
 	result = factory->EnumAdapters(0, &adapter);
 	if (FAILED(result))
 	{
@@ -32,7 +33,7 @@ IndirectX::IndirectX(int windowWidth, int windowHeight, HWND__* handle, bool vsy
 		return;
 	}
 
-	IDXGIOutput* adapterOutput = nullptr;
+	WRL::ComPtr<IDXGIOutput> adapterOutput = nullptr;
 	result = adapter->EnumOutputs(0, &adapterOutput);
 	if (FAILED(result))
 	{
