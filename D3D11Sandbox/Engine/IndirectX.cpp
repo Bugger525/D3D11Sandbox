@@ -8,6 +8,8 @@
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3d11.lib")
 
+//directxtk 깔아서 수정하자.
+
 namespace WRL = Microsoft::WRL;
 namespace DX = DirectX;
 
